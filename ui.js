@@ -97,6 +97,8 @@ export function initializeUI() {
     const toolsDropdownContent = document.getElementById('tools-dropdown-content');
     const transparentToggleBtn = document.getElementById('asset-transparent-toggle');
     const assetTypeSelector = document.getElementById('asset-type-selector');
+    const assetPromptInput = document.getElementById('asset-prompt');
+    const generateAssetBtn = document.getElementById('generate-asset-btn');
 
     initializePanelManager();
     setupPromptAnimations();
@@ -125,6 +127,12 @@ export function initializeUI() {
         if (assetTypeLabel) {
             assetTypeLabel.textContent = button.dataset.type;
         }
+
+        // Update input/button border colors
+        const assetType = button.dataset.type;
+        const color = assetTypeColors[assetType] || 'var(--border-color)';
+        assetPromptInput.style.borderColor = color;
+        generateAssetBtn.style.borderColor = color;
     });
 
     transparentToggleBtn.addEventListener('click', () => {
@@ -141,13 +149,18 @@ export function initializeUI() {
     // Set initial state based on class
     transparentToggleBtn.classList.add('toggled-on');
 
-    // Set initial asset type label on mobile
+    // Set initial asset type label on mobile and border colors
     const initialActiveTypeBtn = assetTypeSelector.querySelector('.asset-type-btn.active');
     if (initialActiveTypeBtn) {
         const assetTypeLabel = document.getElementById('mobile-asset-type-label');
         if (assetTypeLabel) {
             assetTypeLabel.textContent = initialActiveTypeBtn.dataset.type;
         }
+
+        const assetType = initialActiveTypeBtn.dataset.type;
+        const color = assetTypeColors[assetType] || 'var(--border-color)';
+        assetPromptInput.style.borderColor = color;
+        generateAssetBtn.style.borderColor = color;
     }
 
     // Dropdown toggle for mobile and consistency
