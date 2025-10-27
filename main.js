@@ -60,6 +60,7 @@ async function handleGenerateAsset() {
         img.src = asset.url;
         img.title = asset.prompt;
         img.classList.add('library-asset');
+        img.draggable = true; // Make library assets draggable
         img.dataset.assetId = asset.id;
         img.dataset.assetUrl = asset.url;
         img.dataset.assetType = asset.type;
@@ -166,6 +167,18 @@ document.addEventListener('DOMContentLoaded', () => {
     assetLibrary.addEventListener('click', (e) => {
         if (e.target.classList.contains('library-asset')) {
             selectLibraryAsset(e.target);
+        }
+    });
+
+    assetLibrary.addEventListener('dragstart', (e) => {
+        if (e.target.classList.contains('library-asset')) {
+            const assetData = {
+                url: e.target.dataset.assetUrl,
+                type: e.target.dataset.assetType,
+                prompt: e.target.dataset.assetPrompt
+            };
+            e.dataTransfer.setData('application/json', JSON.stringify(assetData));
+            selectLibraryAsset(e.target); // Also select it visually
         }
     });
 });

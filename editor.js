@@ -16,10 +16,11 @@ export function initializeCanvas(canvasElement) {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    canvas.addEventListener('mousedown', onMouseDown);
     canvas.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('mouseup', onMouseUp);
     canvas.addEventListener('click', onClick);
+    canvas.addEventListener('dragover', onDragOver);
+    canvas.addEventListener('drop', onDrop);
     
     document.getElementById('tool-move').addEventListener('click', () => setTool('move'));
     document.getElementById('tool-add').addEventListener('click', () => setTool('add'));
@@ -147,6 +148,36 @@ function onMouseMove(e) {
 
 function onMouseUp(e) {
     isDragging = false;
+}
+
+function onDragOver(e) {
+    e.preventDefault(); // Allow dropping
+}
+
+function onDrop(e) {
+    e.preventDefault();
+    const assetDataString = e.dataTransfer.getData('application/json');
+    if (!assetDataString) return;
+
+    try {
+        const assetData = JSON.parse(assetDataString);
+        const pos = getMousePos(e);
+
+        const newAsset = {
+            ...assetData,
+            id: `asset_${Date.now()}`,
+            x: pos.x - 50, // center on cursor
+            y: pos.y - 50,
+            width: 100,
+            height: 100,
+            name: `${assetData.type} - ${assetData.prompt.substring(0, 15)}...`
+        };
+        addAssetToScene(newAsset);
+        selectAsset(newAsset);
+        redrawCanvas();
+    } catch (error) {
+        console.error("Failed to handle drop event:", error);
+    }
 }
 
 function onClick(e) {
