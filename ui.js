@@ -120,6 +120,11 @@ export function initializeUI() {
 
         // Always show the transparency toggle
         transparentToggleBtn.style.display = 'block';
+
+        const assetTypeLabel = document.getElementById('mobile-asset-type-label');
+        if (assetTypeLabel) {
+            assetTypeLabel.textContent = button.dataset.type;
+        }
     });
 
     transparentToggleBtn.addEventListener('click', () => {
@@ -135,6 +140,15 @@ export function initializeUI() {
     });
     // Set initial state based on class
     transparentToggleBtn.classList.add('toggled-on');
+
+    // Set initial asset type label on mobile
+    const initialActiveTypeBtn = assetTypeSelector.querySelector('.asset-type-btn.active');
+    if (initialActiveTypeBtn) {
+        const assetTypeLabel = document.getElementById('mobile-asset-type-label');
+        if (assetTypeLabel) {
+            assetTypeLabel.textContent = initialActiveTypeBtn.dataset.type;
+        }
+    }
 
     // Dropdown toggle for mobile and consistency
     toolsDropdownBtn.addEventListener('click', (e) => {

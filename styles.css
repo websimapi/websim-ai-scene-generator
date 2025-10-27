@@ -463,11 +463,28 @@ button:hover {
     line-height: 1;
 }
 
+#mobile-asset-type-label {
+    display: none;
+    margin: 0;
+    padding: 0 10px; /* Give it some space from the edge */
+    font-size: 0.8em; /* Smaller text */
+    font-weight: bold;
+    color: var(--text-color);
+    line-height: 30px; /* Vertically center in the 30px handle */
+    pointer-events: none; /* Make sure it doesn't interfere with dragging */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
 .mobile-resize-handle {
     display: none; /* Hidden by default on desktop */
 }
 
 @media (max-width: 768px) {
+    #mobile-asset-type-label {
+        display: block;
+    }
+
     #app-container {
         flex-direction: column;
         /* transition: height 0.3s ease-in-out; */ /* Removed to be controlled by JS */
@@ -551,5 +568,9 @@ button:hover {
 
     #mobile-panel-toggles {
         display: none;
+    }
+    
+    #mobile-panel.visible #mobile-asset-type-label {
+        opacity: 1;
     }
 }
