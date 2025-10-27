@@ -6,6 +6,7 @@ export let lastGeneratedAsset = null;
 const loadingOverlay = document.getElementById('loading-overlay');
 const propertiesPanel = document.getElementById('properties-panel-content');
 const scenePrompt = document.getElementById('scene-prompt');
+const assetPrompt = document.getElementById('asset-prompt');
 const saveBtn = document.getElementById('save-btn');
 const assetLibrary = document.getElementById('asset-library');
 
@@ -90,6 +91,7 @@ export function updatePropertiesPanel(assetId) {
     });
 }
 
+// --- Scene Prompt Animation ---
 const placeholderPrompts = [
     "A vibrant, magical forest clearing at dusk, fantasy art",
     "Cyberpunk city street at night, neon lights, rain",
@@ -106,6 +108,7 @@ const placeholderPrompts = [
 let promptIndex = 0;
 let charIndex = 0;
 let isDeleting = false;
+let sceneAnimationTimeoutId;
 
 export function animatePlaceholder() {
     const currentPrompt = placeholderPrompts[promptIndex];
@@ -121,7 +124,7 @@ export function animatePlaceholder() {
 
     if (!isDeleting && charIndex === currentPrompt.length + 1) {
         isDeleting = true;
-        setTimeout(animatePlaceholder, 2000); // Pause before deleting
+        sceneAnimationTimeoutId = setTimeout(animatePlaceholder, 2000); // Pause before deleting
         return;
     }
 
@@ -129,13 +132,81 @@ export function animatePlaceholder() {
         isDeleting = false;
         promptIndex = (promptIndex + 1) % placeholderPrompts.length;
         charIndex = 0;
-        setTimeout(animatePlaceholder, 500); // Pause before typing next
+        sceneAnimationTimeoutId = setTimeout(animatePlaceholder, 500); // Pause before typing next
         return;
     }
 
     const typingSpeed = isDeleting ? 50 : 100;
-    setTimeout(animatePlaceholder, typingSpeed);
+    sceneAnimationTimeoutId = setTimeout(animatePlaceholder, typingSpeed);
 }
+
+// --- Asset Prompt Animation ---
+const assetPlaceholderPrompts = [
+    "A glowing crystal",
+    "A rusty sword",
+    "A small wooden chest",
+    "A magical potion bottle",
+    "An ancient, moss-covered stone statue",
+    "A friendly robot companion",
+    "A futuristic hovercraft",
+    "A pile of gold coins",
+    "A mysterious, locked book",
+    "A talking animal sidekick"
+];
+let assetPromptIndex = 0;
+let assetCharIndex = 0;
+let isAssetDeleting = false;
+let assetAnimationTimeoutId;
+let isAssetAnimationRunning = false;
+
+function animateAssetPlaceholder() {
+    if (!isAssetAnimationRunning) return;
+
+    const currentPrompt = assetPlaceholderPrompts[assetPromptIndex];
+    let targetText;
+
+    if (isAssetDeleting) {
+        targetText = currentPrompt.substring(0, assetCharIndex--);
+    } else {
+        targetText = currentPrompt.substring(0, assetCharIndex++);
+    }
+
+    assetPrompt.placeholder = targetText;
+
+    if (!isAssetDeleting && assetCharIndex === currentPrompt.length + 1) {
+        isAssetDeleting = true;
+        assetAnimationTimeoutId = setTimeout(animateAssetPlaceholder, 2000); // Pause before deleting
+        return;
+    }
+
+    if (isAssetDeleting && assetCharIndex === -1) {
+        isAssetDeleting = false;
+        assetPromptIndex = (assetPromptIndex + 1) % assetPlaceholderPrompts.length;
+        assetCharIndex = 0;
+        assetAnimationTimeoutId = setTimeout(animateAssetPlaceholder, 500); // Pause before typing next
+        return;
+    }
+
+    const typingSpeed = isAssetDeleting ? 50 : 100;
+    assetAnimationTimeoutId = setTimeout(animateAssetPlaceholder, typingSpeed);
+}
+
+function startAssetPlaceholderAnimation() {
+    if (isAssetAnimationRunning) return;
+    isAssetAnimationRunning = true;
+    animateAssetPlaceholder();
+}
+
+function stopAssetPlaceholderAnimation() {
+    if (!isAssetAnimationRunning) return;
+    isAssetAnimationRunning = false;
+    clearTimeout(assetAnimationTimeoutId);
+    assetPrompt.placeholder = "e.g., 'A glowing crystal'";
+    assetPromptIndex = 0;
+    assetCharIndex = 0;
+    isAssetDeleting = false;
+}
+
 
 export function setupPanelToggles() {
     const leftPanel = document.getElementById('left-panel');
@@ -152,6 +223,15 @@ export function setupPanelToggles() {
         document.querySelectorAll('#left-panel, #right-panel').forEach(p => p.classList.remove('visible'));
         if (!isVisible) {
             panel.classList.add('visible');
+        }
+
+        // Handle asset placeholder animation on mobile
+        if ('ontouchstart' in window) {
+            if (leftPanel.classList.contains('visible')) {
+                startAssetPlaceholderAnimation();
+            } else {
+                stopAssetPlaceholderAnimation();
+            }
         }
     };
 
@@ -179,6 +259,12 @@ export function setupPanelToggles() {
     toolsDropdownContent.addEventListener('click', () => {
         toolsDropdownContent.classList.remove('show');
     });
+
+    // Handle asset placeholder animation on desktop
+    if (!('ontouchstart' in window)) {
+        assetPrompt.addEventListener('mouseenter', startAssetPlaceholderAnimation);
+        assetPrompt.addEventListener('mouseleave', stopAssetPlaceholderAnimation);
+    }
 }
 
 export function addAssetToLibrary(asset) {
