@@ -201,7 +201,7 @@ function stopAssetPlaceholderAnimation() {
     if (!isAssetAnimationRunning) return;
     isAssetAnimationRunning = false;
     clearTimeout(assetAnimationTimeoutId);
-    assetPrompt.placeholder = "e.g., 'A glowing crystal'";
+    assetPrompt.placeholder = "Type here to generate asset";
     assetPromptIndex = 0;
     assetCharIndex = 0;
     isAssetDeleting = false;
