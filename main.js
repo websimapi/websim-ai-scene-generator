@@ -3,7 +3,7 @@ import { initializeCanvas, redrawCanvas, clearAssetImages, setTool } from './edi
 import { generateImage } from './api.js';
 import { 
     showLoader, hideLoader, selectLibraryAsset, updatePropertiesPanel, 
-    animatePlaceholder, setupPanelToggles, addAssetToLibrary, 
+    setupPanelToggles, addAssetToLibrary, 
     updateSaveButtonState, updateLastGeneratedAsset 
 } from './ui.js';
 import { handleImportJson, handleExportJson } from './fileHandlers.js';
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Initial draw and UI setup
     redrawCanvas();
-    animatePlaceholder();
+    // animatePlaceholder(); // This is now handled inside setupPanelToggles
 
     // 4. Register event listeners
     generateSceneBtn.addEventListener('click', handleGenerateScene);

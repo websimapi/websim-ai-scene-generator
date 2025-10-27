@@ -10,6 +10,30 @@ const assetPrompt = document.getElementById('asset-prompt');
 const saveBtn = document.getElementById('save-btn');
 const assetLibrary = document.getElementById('asset-library');
 
+let isFastForwardingScene = false;
+let isFastForwardingAsset = false;
+
+/**
+ * Stops the placeholder animation, fills the input with the current suggestion,
+ * and focuses the element.
+ * @param {HTMLElement} element - The input or textarea element.
+ */
+function finalizeSuggestion(element) {
+    element.value = element.placeholder;
+    element.placeholder = ''; // Clear placeholder to show the value
+    
+    // Add animation class and remove it after it completes
+    element.classList.add('colorize-animation');
+    element.addEventListener('animationend', () => {
+        element.classList.remove('colorize-animation');
+    }, { once: true });
+
+    element.focus();
+    // Move cursor to the end
+    const fullText = element.value;
+    element.setSelectionRange(fullText.length, fullText.length);
+}
+
 export function showLoader() {
     loadingOverlay.style.display = 'flex';
 }
@@ -109,8 +133,11 @@ let promptIndex = 0;
 let charIndex = 0;
 let isDeleting = false;
 let sceneAnimationTimeoutId;
+let isSceneAnimationRunning = false;
 
-export function animatePlaceholder() {
+function animatePlaceholder() {
+    if (!isSceneAnimationRunning) return;
+
     const currentPrompt = placeholderPrompts[promptIndex];
     let targetText;
 
@@ -123,22 +150,54 @@ export function animatePlaceholder() {
     scenePrompt.placeholder = targetText;
 
     if (!isDeleting && charIndex === currentPrompt.length + 1) {
+        if (isFastForwardingScene) {
+            stopScenePlaceholderAnimation();
+            finalizeSuggestion(scenePrompt);
+            isFastForwardingScene = false;
+            return;
+        }
         isDeleting = true;
         sceneAnimationTimeoutId = setTimeout(animatePlaceholder, 2000); // Pause before deleting
         return;
     }
 
     if (isDeleting && charIndex === -1) {
-        isDeleting = false;
-        promptIndex = (promptIndex + 1) % placeholderPrompts.length;
-        charIndex = 0;
-        sceneAnimationTimeoutId = setTimeout(animatePlaceholder, 500); // Pause before typing next
+        if (isFastForwardingScene) {
+            // This case should not be hit if logic is correct, but as a fallback:
+            isFastForwardingScene = false;
+            isDeleting = false;
+            charIndex = 0;
+        } else {
+            isDeleting = false;
+            promptIndex = (promptIndex + 1) % placeholderPrompts.length;
+            charIndex = 0;
+        }
+        sceneAnimationTimeoutId = setTimeout(animatePlaceholder, isFastForwardingScene ? 0 : 500); // Pause before typing next
         return;
     }
 
     const typingSpeed = isDeleting ? 50 : 100;
-    sceneAnimationTimeoutId = setTimeout(animatePlaceholder, typingSpeed);
+    sceneAnimationTimeoutId = setTimeout(animatePlaceholder, isFastForwardingScene ? 0 : typingSpeed);
 }
+
+function startScenePlaceholderAnimation() {
+    if (isSceneAnimationRunning || scenePrompt.value.length > 0) return;
+    isSceneAnimationRunning = true;
+    animatePlaceholder();
+}
+
+function stopScenePlaceholderAnimation() {
+    if (!isSceneAnimationRunning) return;
+    isSceneAnimationRunning = false;
+    clearTimeout(sceneAnimationTimeoutId);
+    if (!isFastForwardingScene) {
+        scenePrompt.placeholder = "A vibrant, magical forest...";
+    }
+    promptIndex = 0;
+    charIndex = 0;
+    isDeleting = false;
+}
+
 
 // --- Asset Prompt Animation ---
 const assetPlaceholderPrompts = [
@@ -174,21 +233,33 @@ function animateAssetPlaceholder() {
     assetPrompt.placeholder = targetText;
 
     if (!isAssetDeleting && assetCharIndex === currentPrompt.length + 1) {
+        if (isFastForwardingAsset) {
+            stopAssetPlaceholderAnimation();
+            finalizeSuggestion(assetPrompt);
+            isFastForwardingAsset = false;
+            return;
+        }
         isAssetDeleting = true;
         assetAnimationTimeoutId = setTimeout(animateAssetPlaceholder, 2000); // Pause before deleting
         return;
     }
 
     if (isAssetDeleting && assetCharIndex === -1) {
-        isAssetDeleting = false;
-        assetPromptIndex = (assetPromptIndex + 1) % assetPlaceholderPrompts.length;
-        assetCharIndex = 0;
-        assetAnimationTimeoutId = setTimeout(animateAssetPlaceholder, 500); // Pause before typing next
+         if (isFastForwardingAsset) {
+            isFastForwardingAsset = false;
+            isAssetDeleting = false;
+            assetCharIndex = 0;
+        } else {
+            isAssetDeleting = false;
+            assetPromptIndex = (assetPromptIndex + 1) % assetPlaceholderPrompts.length;
+            assetCharIndex = 0;
+        }
+        assetAnimationTimeoutId = setTimeout(animateAssetPlaceholder, isFastForwardingAsset ? 0 : 500); // Pause before typing next
         return;
     }
 
     const typingSpeed = isAssetDeleting ? 50 : 100;
-    assetAnimationTimeoutId = setTimeout(animateAssetPlaceholder, typingSpeed);
+    assetAnimationTimeoutId = setTimeout(animateAssetPlaceholder, isFastForwardingAsset ? 0 : typingSpeed);
 }
 
 function startAssetPlaceholderAnimation() {
@@ -201,7 +272,9 @@ function stopAssetPlaceholderAnimation() {
     if (!isAssetAnimationRunning) return;
     isAssetAnimationRunning = false;
     clearTimeout(assetAnimationTimeoutId);
-    assetPrompt.placeholder = "Type here to generate asset";
+    if (!isFastForwardingAsset) {
+        assetPrompt.placeholder = "Type here to generate asset";
+    }
     assetPromptIndex = 0;
     assetCharIndex = 0;
     isAssetDeleting = false;
@@ -217,6 +290,39 @@ export function setupPanelToggles() {
     const toggleRightPanelBtn = document.getElementById('toggle-right-panel');
     const toolsDropdownBtn = document.getElementById('tools-dropdown-btn');
     const toolsDropdownContent = document.getElementById('tools-dropdown-content');
+
+    // --- Animation and Interaction Setup ---
+    startScenePlaceholderAnimation(); // Start scene animation by default
+    
+    scenePrompt.addEventListener('input', () => {
+        isFastForwardingScene = false;
+        stopScenePlaceholderAnimation();
+    });
+    scenePrompt.addEventListener('dblclick', () => {
+        if (isSceneAnimationRunning && !isFastForwardingScene) {
+            isFastForwardingScene = true;
+            clearTimeout(sceneAnimationTimeoutId);
+            if(isDeleting) {
+                isDeleting = false;
+            }
+            animatePlaceholder();
+        }
+    });
+
+    assetPrompt.addEventListener('input', () => {
+        isFastForwardingAsset = false;
+        stopAssetPlaceholderAnimation();
+    });
+    assetPrompt.addEventListener('dblclick', () => {
+        if (isAssetAnimationRunning && !isFastForwardingAsset) {
+            isFastForwardingAsset = true;
+            clearTimeout(assetAnimationTimeoutId);
+            if(isAssetDeleting) {
+                isAssetDeleting = false;
+            }
+            animateAssetPlaceholder();
+        }
+    });
 
     const togglePanel = (panel) => {
         const isVisible = panel.classList.contains('visible');
