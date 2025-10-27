@@ -13,7 +13,7 @@ let scale = 1;
 let offsetX = 0;
 let offsetY = 0;
 
-const assetTypeColors = {
+export const assetTypeColors = {
     'Object': '#E0E0E0',    // Light Grey
     'Portal': '#DA70D6',    // Orchid
     'NPC': '#98FB98',       // Pale Green
@@ -122,7 +122,6 @@ export function initializeCanvas(canvasElement) {
     canvas.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('mouseup', onMouseUp);
     canvas.addEventListener('mousedown', onMouseDown);
-    canvas.addEventListener('mouseleave', onMouseUp);
     canvas.addEventListener('click', onClick);
     canvas.addEventListener('dragover', onDragOver);
     canvas.addEventListener('drop', onDrop);
@@ -329,7 +328,7 @@ function onDrop(e) {
             y: pos.y - (assetSize / 2),
             width: assetSize,
             height: assetSize,
-            name: `${assetData.type} - ${assetData.prompt.substring(0, 15)}...`
+            name: `${assetData.type} - ${(assetData.prompt || 'Untitled').substring(0, 15)}...`
         };
         addAssetToScene(newAsset);
         selectAsset(newAsset);

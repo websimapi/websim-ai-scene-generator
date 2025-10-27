@@ -242,9 +242,16 @@ button:hover {
     border-radius: 4px;
 }
 
-.library-asset:hover, .library-asset.selected {
+.library-asset:hover {
     border-color: var(--primary-color);
 }
+
+.library-asset.selected {
+    /* Generic selected style is now handled in JS to be brighter version of type color */
+}
+
+/* Asset-type specific outline colors on selection */
+/* These are now injected by ui.js to stay in sync with editor.js colors */
 
 
 #main-content {
