@@ -6,6 +6,7 @@ const loadingOverlay = document.getElementById('loading-overlay');
 const generateSceneBtn = document.getElementById('generate-scene-btn');
 const generateAssetBtn = document.getElementById('generate-asset-btn');
 const exportJsonBtn = document.getElementById('export-json-btn');
+const saveBtn = document.getElementById('save-btn');
 const assetLibrary = document.getElementById('asset-library');
 const propertiesPanel = document.getElementById('properties-panel-content');
 
@@ -161,7 +162,7 @@ export function updatePropertiesPanel(assetId) {
 
 function saveStateToLocalStorage() {
     try {
-        console.log("Autosaving state to localStorage...");
+        console.log("Saving state to localStorage...");
         localStorage.setItem('sceneState', JSON.stringify(sceneState));
         
         const libraryAssets = [];
@@ -175,6 +176,7 @@ function saveStateToLocalStorage() {
         localStorage.setItem('assetLibrary', JSON.stringify(libraryAssets));
         
         clearDirtyFlag();
+        saveBtn.classList.remove('dirty');
         console.log("State saved.");
     } catch (e) {
         console.error("Failed to save state to localStorage", e);
@@ -226,6 +228,11 @@ document.addEventListener('DOMContentLoaded', () => {
     generateSceneBtn.addEventListener('click', handleGenerateScene);
     generateAssetBtn.addEventListener('click', handleGenerateAsset);
     exportJsonBtn.addEventListener('click', handleExportJson);
+    saveBtn.addEventListener('click', () => {
+        saveStateToLocalStorage();
+        // Maybe add a more subtle notification in the future
+        alert('Scene Saved!');
+    });
 
     assetLibrary.addEventListener('click', (e) => {
         if (e.target.classList.contains('library-asset')) {
@@ -251,6 +258,23 @@ document.addEventListener('DOMContentLoaded', () => {
             saveStateToLocalStorage();
         }
     }, 5000); // Autosave every 5 seconds
+
+    // Unsaved changes check
+    setInterval(() => {
+        if(isStateDirty()) {
+            saveBtn.classList.add('dirty');
+        } else {
+            saveBtn.classList.remove('dirty');
+        }
+    }, 1000);
+
+    window.addEventListener('beforeunload', (e) => {
+        if (isStateDirty()) {
+            e.preventDefault();
+            e.returnValue = ''; // For Chrome
+            return 'You have unsaved changes. Are you sure you want to leave?'; // For older browsers
+        }
+    });
 });
 
 export { lastGeneratedAsset };

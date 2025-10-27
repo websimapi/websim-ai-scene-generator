@@ -145,6 +145,23 @@ button:hover {
     background-color: var(--danger-color);
 }
 
+#save-btn.dirty {
+    animation: pulse 1.5s infinite;
+    box-shadow: 0 0 10px var(--primary-color);
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 10px 10px rgba(0, 123, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+    }
+}
+
 
 #editor-canvas {
     width: 100%;
