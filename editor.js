@@ -6,6 +6,14 @@ let canvas, ctx;
 let backgroundImages = [];
 const assetImages = {};
 
+const assetTypeColors = {
+    'Object': '#E0E0E0',    // Light Grey
+    'Portal': '#DA70D6',    // Orchid
+    'NPC': '#98FB98',       // Pale Green
+    'Item': '#87CEEB',      // Sky Blue
+    'Character': '#FFA07A', // Light Salmon
+};
+
 let activeTool = 'move'; // 'move', 'add', 'delete'
 let selectedAssetId = null;
 let isDragging = false;
@@ -155,10 +163,18 @@ export function redrawCanvas() {
         if (img && img.complete) {
             ctx.drawImage(img, asset.x, asset.y, asset.width, asset.height);
 
-            // Draw selection box if selected
+            // Draw colored outline for asset type
+            const color = assetTypeColors[asset.type];
+            if (color) {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(asset.x, asset.y, asset.width, asset.height);
+            }
+
+            // Draw selection box if selected (drawn on top of type outline)
             if (asset.id === selectedAssetId) {
                 ctx.strokeStyle = '#007bff';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 3; // Thicker for emphasis
                 ctx.strokeRect(asset.x, asset.y, asset.width, asset.height);
             }
         }
