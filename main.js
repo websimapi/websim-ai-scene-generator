@@ -44,7 +44,8 @@ async function handleGenerateAsset() {
         return;
     }
     try {
-        const isTransparent = document.getElementById('asset-transparent').checked;
+        const toggleBtn = document.getElementById('asset-transparent-toggle');
+        const isTransparent = toggleBtn.classList.contains('toggled-on');
         const result = await generateImage(prompt, isTransparent, "1:1");
         const assetType = document.getElementById('asset-type').value;
         

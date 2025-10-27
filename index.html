@@ -33,10 +33,11 @@
             <button id="toggle-left-panel" class="panel-toggle" title="Hide Panel"><img src="hide_icon.png" alt="Hide"></button>
             
             <div class="control-group">
-                <input type="text" id="asset-prompt" placeholder="Type here to generate asset">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="asset-transparent" checked>
-                    <label for="asset-transparent">Transparent Background</label>
+                <div class="input-with-icon">
+                    <input type="text" id="asset-prompt" placeholder="Type here to generate asset">
+                    <button id="asset-transparent-toggle" class="transparent-toggle" title="Toggle Transparent Background">
+                        <img src="./eye_slash_icon.png" alt="Toggle Transparency">
+                    </button>
                 </div>
                 <label for="asset-type">Asset Type</label>
                 <select id="asset-type">

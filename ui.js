@@ -290,6 +290,7 @@ export function setupPanelToggles() {
     const toggleRightPanelBtn = document.getElementById('toggle-right-panel');
     const toolsDropdownBtn = document.getElementById('tools-dropdown-btn');
     const toolsDropdownContent = document.getElementById('tools-dropdown-content');
+    const transparentToggleBtn = document.getElementById('asset-transparent-toggle');
 
     // --- Animation and Interaction Setup ---
     startScenePlaceholderAnimation(); // Start scene animation by default
@@ -323,6 +324,21 @@ export function setupPanelToggles() {
             animateAssetPlaceholder();
         }
     });
+
+    transparentToggleBtn.addEventListener('click', () => {
+        const isToggledOn = transparentToggleBtn.classList.toggle('toggled-on');
+        const icon = transparentToggleBtn.querySelector('img');
+        if (isToggledOn) {
+            icon.src = './eye_slash_icon.png';
+            icon.alt = 'Transparency On';
+        } else {
+            icon.src = './eye_icon.png';
+            icon.alt = 'Transparency Off';
+        }
+    });
+    // Set initial state based on class
+    transparentToggleBtn.classList.add('toggled-on');
+
 
     const togglePanel = (panel) => {
         const isVisible = panel.classList.contains('visible');
