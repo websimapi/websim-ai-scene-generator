@@ -1,6 +1,6 @@
 import { addAssetToScene } from './state.js';
 import { redrawCanvas } from './editor.js';
-import { selectLibraryAsset } from './main.js';
+import { selectLibraryAsset } from './ui.js';
 
 let touchDragGhost = null;
 
