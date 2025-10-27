@@ -43,7 +43,8 @@ async function handleGenerateAsset() {
         return;
     }
     try {
-        const result = await generateImage(prompt, true, "1:1");
+        const isTransparent = document.getElementById('asset-transparent').checked;
+        const result = await generateImage(prompt, isTransparent, "1:1");
         const assetType = document.getElementById('asset-type').value;
         
         const asset = {
@@ -184,4 +185,3 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 export { lastGeneratedAsset };
-

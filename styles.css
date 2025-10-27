@@ -49,6 +49,16 @@ h2, h3 {
     gap: 8px;
 }
 
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkbox-group input {
+    width: auto;
+}
+
 label {
     font-size: 0.9em;
 }
@@ -180,4 +190,3 @@ button:hover {
 #properties-panel-content input, #properties-panel-content textarea {
     margin-bottom: 10px;
 }
-
