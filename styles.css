@@ -20,6 +20,11 @@ body {
 #app-container {
     display: flex;
     height: calc(100vh - 60px); /* Adjust for top bar */
+    transition: height 0.3s ease-in-out;
+}
+
+#app-container.full-height {
+    height: 100vh;
 }
 
 #left-panel, #right-panel {
@@ -53,6 +58,15 @@ h2, h3 {
     background-color: var(--panel-bg);
     border-bottom: 1px solid var(--border-color);
     box-sizing: border-box;
+    transition: all 0.3s ease-in-out;
+}
+
+#toolbar.hidden {
+    height: 0;
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+    border-bottom: none;
 }
 
 #scene-prompt-container {
@@ -369,6 +383,21 @@ button:hover {
     height: 20px;
     filter: invert(1);
     flex-shrink: 0;
+}
+
+#floating-tools-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1001; /* Above mobile panel handle */
+    display: none;
+}
+
+#floating-tools-container .dropdown-content {
+    /* Adjust dropdown to open upwards */
+    top: auto;
+    bottom: 100%;
+    right: 0;
 }
 
 

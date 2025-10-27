@@ -1,7 +1,7 @@
 import { sceneState, markAsDirty } from './state.js';
 import { clearAssetImages, redrawCanvas } from './editor.js';
 import { updatePropertiesPanel } from './propertiesPanel.js';
-import { addAssetToLibrary } from './ui.js';
+import { addAssetToLibrary, checkToolbarState } from './ui.js';
 
 export function handleImportJson() {
     const input = document.createElement('input');
@@ -61,6 +61,7 @@ export function handleImportJson() {
                     markAsDirty();
                     redrawCanvas();
                     updatePropertiesPanel(null);
+                    checkToolbarState(); // Check toolbar state after import
                     console.log("Scene imported successfully.");
                 } else {
                     alert('Invalid or corrupted scene file.');

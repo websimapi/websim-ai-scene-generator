@@ -10,6 +10,39 @@ const loadingOverlay = document.getElementById('loading-overlay');
 const saveBtn = document.getElementById('save-btn');
 const assetLibrary = document.getElementById('asset-library');
 
+export function checkToolbarState() {
+    const toolbar = document.getElementById('toolbar');
+    const appContainer = document.getElementById('app-container');
+    const floatingToolsContainer = document.getElementById('floating-tools-container');
+    const toolsDropdown = document.querySelector('.dropdown'); // More robust selector
+
+    if (!toolbar || !toolsDropdown || !floatingToolsContainer) return;
+
+    // Condition to hide toolbar: if there's a background or any assets.
+    const shouldHideToolbar = sceneState.backgrounds.length > 0 || sceneState.assets.length > 0;
+
+    if (shouldHideToolbar) {
+        toolbar.classList.add('hidden');
+        appContainer.classList.add('full-height');
+        
+        // Move dropdown to floating container if it's not already there
+        if (toolsDropdown.parentElement !== floatingToolsContainer) {
+            floatingToolsContainer.appendChild(toolsDropdown);
+        }
+        floatingToolsContainer.style.display = 'block';
+    } else {
+        // This case would be for resetting the scene, for example
+        toolbar.classList.remove('hidden');
+        appContainer.classList.remove('full-height');
+
+        if (toolsDropdown.parentElement !== toolbar) {
+             toolbar.appendChild(toolsDropdown);
+        }
+       
+        floatingToolsContainer.style.display = 'none';
+    }
+}
+
 export function showLoader() {
     loadingOverlay.style.display = 'flex';
 }
@@ -84,6 +117,17 @@ export function addAssetToLibrary(asset) {
     return img;
 }
 
+function filterAssetLibrary(type) {
+    const libraryAssets = assetLibrary.querySelectorAll('.library-asset');
+    libraryAssets.forEach(asset => {
+        if (type === null || asset.dataset.assetType === type) {
+            asset.style.display = ''; // Reset to default display
+        } else {
+            asset.style.display = 'none';
+        }
+    });
+}
+
 export function updateSaveButtonState(isDirty) {
     if (isDirty) {
         saveBtn.classList.add('dirty');
@@ -141,6 +185,7 @@ export function initializeUI() {
         const assetType = button.dataset.type;
         const color = assetTypeColors[assetType] || 'var(--border-color)';
         assetPromptInput.style.borderColor = color;
+        filterAssetLibrary(assetType);
     });
 
     transparentToggleBtn.addEventListener('click', () => {
@@ -192,6 +237,7 @@ export function initializeUI() {
         const assetType = initialActiveTypeBtn.dataset.type;
         const color = assetTypeColors[assetType] || 'var(--border-color)';
         assetPromptInput.style.borderColor = color;
+        filterAssetLibrary(assetType);
     }
 
     // Dropdown toggle for mobile and consistency

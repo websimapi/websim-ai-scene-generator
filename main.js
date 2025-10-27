@@ -4,7 +4,8 @@ import { generateImage } from './api.js';
 import { 
     showLoader, hideLoader, selectLibraryAsset,
     initializeUI, addAssetToLibrary, 
-    updateSaveButtonState, updateLastGeneratedAsset 
+    updateSaveButtonState, updateLastGeneratedAsset,
+    checkToolbarState
 } from './ui.js';
 import { handleImportJson, handleExportJson } from './fileHandlers.js';
 import { saveStateToLocalStorage, loadStateFromLocalStorage } from './stateManager.js';
@@ -74,6 +75,7 @@ async function handleGenerateScene() {
         alert('Could not generate scene background.');
     } finally {
         hideLoader();
+        checkToolbarState(); // Check after scene generation
     }
 }
 
@@ -119,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Load initial state
     const loadedLibraryAssets = loadStateFromLocalStorage();
     loadedLibraryAssets.forEach(assetData => addAssetToLibrary(assetData));
-
+    
     // 2. Initialize modules
     initializeCanvas(document.getElementById('editor-canvas'));
     initializeDragDrop();
@@ -127,6 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Initial draw and UI setup
     redrawCanvas();
+    checkToolbarState(); // Initial check on page load
     // animatePlaceholder(); // This is now handled inside initializeUI -> setupPromptAnimations
 
     // 4. Register event listeners
