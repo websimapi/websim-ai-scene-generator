@@ -13,6 +13,7 @@
     </div>
     <div id="app-container">
         <div id="left-panel">
+            <button id="toggle-left-panel" class="panel-toggle">Hide</button>
             <h2>Scene</h2>
             <div class="control-group">
                 <label for="scene-prompt">Background Prompt</label>
@@ -53,8 +54,13 @@
                 <button id="save-btn" class="tool-btn" title="Save Scene"><img src="save_icon.png" alt="Save"></button>
             </div>
             <canvas id="editor-canvas"></canvas>
+            <div id="mobile-panel-toggles">
+                <button id="mobile-toggle-left" class="mobile-panel-toggle">Assets</button>
+                <button id="mobile-toggle-right" class="mobile-panel-toggle">Properties</button>
+            </div>
         </div>
         <div id="right-panel">
+            <button id="toggle-right-panel" class="panel-toggle">Hide</button>
              <h2>Properties</h2>
              <div id="properties-panel-content">
                 <p>Select an asset to see its properties.</p>
