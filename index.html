@@ -13,12 +13,12 @@
     </div>
     <div id="app-container">
         <div id="left-panel">
-            <button id="toggle-left-panel" class="panel-toggle">Hide</button>
-            <h2>Scene</h2>
+            <button id="toggle-left-panel" class="panel-toggle" title="Hide Panel"><img src="hide_icon.png" alt="Hide"></button>
             <div class="control-group">
-                <label for="scene-prompt">Background Prompt</label>
-                <textarea id="scene-prompt" rows="3">A vibrant, magical forest clearing at dusk, fantasy art</textarea>
-                <button id="generate-scene-btn">Generate Scene</button>
+                <div id="scene-prompt-container">
+                    <textarea id="scene-prompt" rows="3" placeholder="A vibrant, magical forest..."></textarea>
+                    <button id="generate-scene-btn" title="Generate Scene"><img src="generate_icon.png" alt="Generate"></button>
+                </div>
             </div>
             <hr>
             <h2>Assets</h2>
@@ -60,7 +60,7 @@
             </div>
         </div>
         <div id="right-panel">
-            <button id="toggle-right-panel" class="panel-toggle">Hide</button>
+            <button id="toggle-right-panel" class="panel-toggle" title="Hide Panel"><img src="hide_icon.png" alt="Hide"></button>
              <h2>Properties</h2>
              <div id="properties-panel-content">
                 <p>Select an asset to see its properties.</p>

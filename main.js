@@ -10,6 +10,7 @@ const exportJsonBtn = document.getElementById('export-json-btn');
 const saveBtn = document.getElementById('save-btn');
 const assetLibrary = document.getElementById('asset-library');
 const propertiesPanel = document.getElementById('properties-panel-content');
+const scenePrompt = document.getElementById('scene-prompt');
 
 let lastGeneratedAsset = null;
 let touchDragGhost = null;
@@ -24,7 +25,7 @@ function hideLoader() {
 
 async function handleGenerateScene() {
     showLoader();
-    const prompt = document.getElementById('scene-prompt').value;
+    const prompt = scenePrompt.value || scenePrompt.placeholder;
     try {
         const result = await generateImage(prompt, false, "16:9");
         sceneState.background = result.url;
@@ -263,11 +264,59 @@ function loadStateFromLocalStorage() {
     }
 }
 
+const placeholderPrompts = [
+    "A vibrant, magical forest clearing at dusk, fantasy art",
+    "Cyberpunk city street at night, neon lights, rain",
+    "Underwater coral reef teeming with bioluminescent creatures",
+    "Steampunk airship soaring through clouds above a mountain range",
+    "Alien desert landscape with two suns setting",
+    "Cozy medieval tavern with a crackling fireplace",
+    "Post-apocalyptic city ruins overgrown with nature",
+    "Futuristic space station orbiting a gas giant",
+    "Japanese zen garden with cherry blossoms and a koi pond",
+    "Haunted Victorian mansion on a stormy night"
+];
+
+let promptIndex = 0;
+let charIndex = 0;
+let isDeleting = false;
+
+function animatePlaceholder() {
+    const currentPrompt = placeholderPrompts[promptIndex];
+    let targetText;
+
+    if (isDeleting) {
+        targetText = currentPrompt.substring(0, charIndex--);
+    } else {
+        targetText = currentPrompt.substring(0, charIndex++);
+    }
+
+    scenePrompt.placeholder = targetText;
+
+    if (!isDeleting && charIndex === currentPrompt.length + 1) {
+        isDeleting = true;
+        setTimeout(animatePlaceholder, 2000); // Pause before deleting
+        return;
+    }
+
+    if (isDeleting && charIndex === -1) {
+        isDeleting = false;
+        promptIndex = (promptIndex + 1) % placeholderPrompts.length;
+        charIndex = 0;
+        setTimeout(animatePlaceholder, 500); // Pause before typing next
+        return;
+    }
+
+    const typingSpeed = isDeleting ? 50 : 100;
+    setTimeout(animatePlaceholder, typingSpeed);
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     loadStateFromLocalStorage();
     initializeCanvas(document.getElementById('editor-canvas'));
     redrawCanvas(); // Draw loaded state
+    animatePlaceholder(); // Start placeholder animation
 
     generateSceneBtn.addEventListener('click', handleGenerateScene);
     generateAssetBtn.addEventListener('click', handleGenerateAsset);
