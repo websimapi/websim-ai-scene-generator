@@ -1,10 +1,11 @@
 import { sceneState, addAssetToScene, getAssetById, updateAsset, removeAsset, markAsDirty, isStateDirty, clearDirtyFlag } from './state.js';
-import { initializeCanvas, redrawCanvas, getAssetAtPos, getSelectedAsset } from './editor.js';
+import { initializeCanvas, redrawCanvas, getAssetAtPos, getSelectedAsset, clearAssetImages } from './editor.js';
 import { generateImage } from './api.js';
 
 const loadingOverlay = document.getElementById('loading-overlay');
 const generateSceneBtn = document.getElementById('generate-scene-btn');
 const generateAssetBtn = document.getElementById('generate-asset-btn');
+const importJsonBtn = document.getElementById('import-json-btn');
 const exportJsonBtn = document.getElementById('export-json-btn');
 const saveBtn = document.getElementById('save-btn');
 const assetLibrary = document.getElementById('asset-library');
@@ -97,6 +98,47 @@ function selectLibraryAsset(element) {
     } else {
         lastGeneratedAsset = null;
     }
+}
+
+function handleImportJson() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = readerEvent => {
+            try {
+                const importedData = JSON.parse(readerEvent.target.result);
+                
+                // Basic validation
+                if (importedData && Array.isArray(importedData.assets)) {
+                    // Reset current scene state before loading new one
+                    sceneState.background = importedData.background || null;
+                    sceneState.assets = importedData.assets || [];
+                    
+                    clearAssetImages(); // Clear cached images of old assets
+                    markAsDirty();
+                    redrawCanvas();
+                    updatePropertiesPanel(null); // Clear properties panel
+                    console.log("Scene imported successfully.");
+                } else {
+                    alert('Invalid or corrupted scene file.');
+                }
+            } catch (error) {
+                console.error("Failed to parse JSON file:", error);
+                alert('Failed to read or parse the scene file. Please ensure it is a valid JSON.');
+            }
+        };
+        reader.onerror = error => {
+            console.error("File reading error:", error);
+            alert("Error reading file.");
+        };
+        reader.readAsText(file);
+    };
+    input.click();
 }
 
 function handleExportJson() {
@@ -227,6 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     generateSceneBtn.addEventListener('click', handleGenerateScene);
     generateAssetBtn.addEventListener('click', handleGenerateAsset);
+    importJsonBtn.addEventListener('click', handleImportJson);
     exportJsonBtn.addEventListener('click', handleExportJson);
     saveBtn.addEventListener('click', () => {
         saveStateToLocalStorage();

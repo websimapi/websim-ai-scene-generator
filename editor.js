@@ -26,6 +26,14 @@ function onMouseDown(e) {
     }
 }
 
+export function clearAssetImages() {
+    // Clear all keys from the assetImages object
+    for (const key in assetImages) {
+        delete assetImages[key];
+    }
+    backgroundImage = null; // Also clear background image to force a reload
+}
+
 export function initializeCanvas(canvasElement) {
     canvas = canvasElement;
     ctx = canvas.getContext('2d');
