@@ -100,6 +100,8 @@ export function initializeUI() {
     const assetPromptInput = document.getElementById('asset-prompt');
     const generateAssetBtn = document.getElementById('generate-asset-btn');
     const generateAssetIcon = document.getElementById('generate-asset-icon');
+    const mobileTransparencyLabel = document.getElementById('mobile-transparency-label');
+    let transparencyLabelTimeout;
 
     initializePanelManager();
     setupPromptAnimations();
@@ -144,12 +146,30 @@ export function initializeUI() {
     transparentToggleBtn.addEventListener('click', () => {
         const isToggledOn = transparentToggleBtn.classList.toggle('toggled-on');
         const icon = transparentToggleBtn.querySelector('img');
+        
+        if (transparencyLabelTimeout) {
+            clearTimeout(transparencyLabelTimeout);
+        }
+
         if (isToggledOn) {
             icon.src = './eye_slash_icon.png';
             icon.alt = 'Transparency On';
+            if (mobileTransparencyLabel) {
+                mobileTransparencyLabel.textContent = 'Transparent Background';
+            }
         } else {
             icon.src = './eye_icon.png';
             icon.alt = 'Transparency Off';
+            if (mobileTransparencyLabel) {
+                mobileTransparencyLabel.textContent = 'Solid Background';
+            }
+        }
+        
+        if (mobileTransparencyLabel) {
+            mobileTransparencyLabel.style.opacity = '1';
+            transparencyLabelTimeout = setTimeout(() => {
+                mobileTransparencyLabel.style.opacity = '0';
+            }, 2000); // Hide after 2 seconds
         }
     });
     // Set initial state based on class
