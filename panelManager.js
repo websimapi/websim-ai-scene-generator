@@ -17,6 +17,15 @@ export function initializePanelManager() {
             panel.classList.add('visible');
         }
 
+        // Add/remove class on app-container for dynamic height adjustment
+        const appContainer = document.getElementById('app-container');
+        const anyPanelVisible = leftPanel.classList.contains('visible') || rightPanel.classList.contains('visible');
+        if (anyPanelVisible) {
+            appContainer.classList.add('panel-visible');
+        } else {
+            appContainer.classList.remove('panel-visible');
+        }
+
         // Handle asset placeholder animation on mobile
         if ('ontouchstart' in window) {
             if (leftPanel.classList.contains('visible')) {
