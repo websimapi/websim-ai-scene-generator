@@ -16,6 +16,7 @@ export function initializeCanvas(canvasElement) {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
+    canvas.addEventListener('mousedown', onMouseDown);
     canvas.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('mouseup', onMouseUp);
     canvas.addEventListener('click', onClick);
@@ -209,4 +210,3 @@ function onClick(e) {
 export function getSelectedAsset() {
     return sceneState.assets.find(a => a.id === selectedAssetId);
 }
-
