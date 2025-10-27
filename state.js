@@ -1,5 +1,5 @@
 export const sceneState = {
-    background: null,
+    backgrounds: [],
     assets: [], // { id, type, prompt, url, x, y, width, height, name }
 };
 
@@ -41,4 +41,3 @@ export function removeAsset(id) {
         markAsDirty();
     }
 }
-

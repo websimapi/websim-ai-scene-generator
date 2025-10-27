@@ -33,6 +33,11 @@ export function loadStateFromLocalStorage() {
             console.log("Loading scene state from localStorage...");
             const parsedState = JSON.parse(savedState);
             if (parsedState && typeof parsedState === 'object') {
+                // Migration for background -> backgrounds
+                if (parsedState.background && !Array.isArray(parsedState.backgrounds)) {
+                    parsedState.backgrounds = [parsedState.background];
+                    delete parsedState.background;
+                }
                 Object.assign(sceneState, parsedState);
             }
         }

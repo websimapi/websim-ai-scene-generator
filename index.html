@@ -39,14 +39,14 @@
                         <img src="./eye_slash_icon.png" alt="Toggle Transparency">
                     </button>
                 </div>
-                <label for="asset-type">Asset Type</label>
-                <select id="asset-type">
-                    <option value="Object">Object</option>
-                    <option value="Portal">Portal</option>
-                    <option value="NPC">NPC</option>
-                    <option value="Item">Item</option>
-                    <option value="Character">Character</option>
-                </select>
+                <div id="asset-type-selector">
+                    <button class="asset-type-btn active" data-type="Object" title="Object"><img src="object_icon.png" alt="Object"></button>
+                    <button class="asset-type-btn" data-type="Portal" title="Portal"><img src="portal_icon.png" alt="Portal"></button>
+                    <button class="asset-type-btn" data-type="NPC" title="NPC"><img src="npc_icon.png" alt="NPC"></button>
+                    <button class="asset-type-btn" data-type="Item" title="Item"><img src="item_icon.png" alt="Item"></button>
+                    <button class="asset-type-btn" data-type="Character" title="Character"><img src="character_icon.png" alt="Character"></button>
+                    <button class="asset-type-btn" data-type="Background" title="Background"><img src="background_icon.png" alt="Background"></button>
+                </div>
                 <button id="generate-asset-btn">Generate Asset</button>
             </div>
             <h3>Asset Library</h3>

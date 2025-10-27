@@ -19,14 +19,56 @@ const saveBtn = document.getElementById('save-btn');
 const assetLibrary = document.getElementById('asset-library');
 const scenePrompt = document.getElementById('scene-prompt');
 
+const OTHER_ASSET_TYPES = ['Object', 'Portal', 'NPC', 'Item', 'Character'];
+
+function getRandomAssetTypes(count) {
+    const shuffled = OTHER_ASSET_TYPES.slice().sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+}
+
 async function handleGenerateScene() {
     showLoader();
     const prompt = scenePrompt.value || scenePrompt.placeholder;
     try {
-        const result = await generateImage(prompt, false, "16:9");
-        sceneState.background = result.url;
+        // 1. Generate and set background
+        const bgResult = await generateImage(prompt, false, "16:9");
+        sceneState.backgrounds = [bgResult.url];
+
+        // 2. Add background to asset library
+        const backgroundAssetData = {
+            id: `asset_${Date.now()}_bg`,
+            type: 'Background',
+            prompt: prompt,
+            url: bgResult.url,
+            name: `BG - ${prompt.substring(0, 15)}...`
+        };
+        addAssetToLibrary(backgroundAssetData);
+
         markAsDirty();
         redrawCanvas();
+
+        // 3. Generate 3 random assets
+        const randomTypes = getRandomAssetTypes(3);
+        const assetPromises = randomTypes.map(async (type) => {
+            const assetPrompt = `${type} from a scene described as: ${prompt}`;
+            try {
+                const result = await generateImage(assetPrompt, true, "1:1");
+                const assetData = {
+                    id: `asset_${Date.now()}_${type}`,
+                    type: type,
+                    prompt: assetPrompt,
+                    url: result.url,
+                    name: `${type} - ${prompt.substring(0, 15)}...`
+                };
+                addAssetToLibrary(assetData);
+            } catch (assetError) {
+                console.error(`Failed to generate asset of type ${type}:`, assetError);
+                // Don't throw, allow other assets to generate
+            }
+        });
+        
+        await Promise.all(assetPromises);
+
     } catch (error) {
         console.error('Failed to generate scene:', error);
         alert('Could not generate scene background.');
@@ -45,9 +87,11 @@ async function handleGenerateAsset() {
     }
     try {
         const toggleBtn = document.getElementById('asset-transparent-toggle');
+        const assetType = document.querySelector('.asset-type-btn.active').dataset.type;
         const isTransparent = toggleBtn.classList.contains('toggled-on');
-        const result = await generateImage(prompt, isTransparent, "1:1");
-        const assetType = document.getElementById('asset-type').value;
+        const aspectRatio = assetType === 'Background' ? '16:9' : '1:1';
+        
+        const result = await generateImage(prompt, isTransparent, aspectRatio);
         
         const assetData = {
             id: `asset_${Date.now()}`,

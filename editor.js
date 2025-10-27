@@ -1,9 +1,8 @@
 import { sceneState, addAssetToScene, updateAsset, removeAsset, markAsDirty } from './state.js';
-import { updatePropertiesPanel } from './ui.js';
-import { lastGeneratedAsset } from './ui.js';
+import { updatePropertiesPanel, lastGeneratedAsset, selectLibraryAsset } from './ui.js';
 
 let canvas, ctx;
-let backgroundImage = null;
+let backgroundImages = [];
 const assetImages = {};
 
 let activeTool = 'move'; // 'move', 'add', 'delete'
@@ -62,7 +61,7 @@ export function clearAssetImages() {
     for (const key in assetImages) {
         delete assetImages[key];
     }
-    backgroundImage = null; // Also clear background image to force a reload
+    backgroundImages = []; // Also clear background images to force a reload
 }
 
 export function initializeCanvas(canvasElement) {
@@ -125,14 +124,23 @@ export function redrawCanvas() {
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw background
-    if (sceneState.background && !backgroundImage) {
-        backgroundImage = new Image();
-        backgroundImage.src = sceneState.background;
-        backgroundImage.onload = () => redrawCanvas();
+    // Draw background layers
+    if (sceneState.backgrounds.length > 0 && backgroundImages.length !== sceneState.backgrounds.length) {
+        backgroundImages = [];
+        sceneState.backgrounds.forEach(bgUrl => {
+            const img = new Image();
+            img.src = bgUrl;
+            img.onload = () => redrawCanvas();
+            backgroundImages.push(img);
+        });
     }
-    if (backgroundImage) {
-        ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+
+    if (backgroundImages.length > 0) {
+        backgroundImages.forEach(bgImg => {
+            if (bgImg.complete) {
+                ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+            }
+        });
     }
 
     // Draw assets
@@ -234,6 +242,18 @@ function onDrop(e) {
 
     try {
         const assetData = JSON.parse(assetDataString);
+        
+        // Don't allow dropping backgrounds into the scene as objects
+        if (assetData.type === 'Background') {
+            // Find the library item and select it to show properties
+             const libraryItem = document.querySelector(`.library-asset[data-asset-url="${assetData.url}"]`);
+            if (libraryItem) {
+                selectLibraryAsset(libraryItem);
+            }
+            alert("Backgrounds can't be placed as objects. Select it in the library to set it as the scene background.");
+            return;
+        }
+
         const pos = getMousePos(e);
 
         const newAsset = {
@@ -260,18 +280,31 @@ function onClick(e) {
     // Click-to-select is now handled by onMouseDown, so we can avoid re-selecting here
     // which might interfere with drag initiation. We only handle adding assets here.
     if (activeTool === 'add') {
-        if (!lastGeneratedAsset) {
+        const selectedLibraryAsset = document.querySelector('.library-asset.selected');
+        if (!selectedLibraryAsset) {
             alert('Please generate an asset first or select one from the library.');
             return;
         }
+
+        const assetData = {
+            url: selectedLibraryAsset.dataset.assetUrl,
+            type: selectedLibraryAsset.dataset.assetType,
+            prompt: selectedLibraryAsset.dataset.assetPrompt,
+        };
+
+        if (assetData.type === 'Background') {
+             alert("Backgrounds can't be placed as objects. Select it in the library to set it as the scene background.");
+            return;
+        }
+
         const newAsset = {
-            ...lastGeneratedAsset,
+            ...assetData,
             id: `asset_${Date.now()}`,
             x: pos.x - 50, // center it
             y: pos.y - 50,
             width: 100,
             height: 100,
-            name: `${lastGeneratedAsset.type} - ${lastGeneratedAsset.prompt.substring(0, 15)}...`
+            name: `${assetData.type} - ${assetData.prompt.substring(0, 15)}...`
         };
         addAssetToScene(newAsset);
         selectAsset(newAsset);

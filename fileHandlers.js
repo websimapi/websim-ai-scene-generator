@@ -16,7 +16,10 @@ export function handleImportJson() {
                 const importedData = JSON.parse(readerEvent.target.result);
                 
                 if (importedData && Array.isArray(importedData.assets)) {
-                    sceneState.background = importedData.background || null;
+                    if (importedData.background && !Array.isArray(importedData.backgrounds)) {
+                        importedData.backgrounds = [importedData.background];
+                    }
+                    sceneState.backgrounds = importedData.backgrounds || [];
                     sceneState.assets = importedData.assets || [];
                     
                     clearAssetImages();
@@ -51,4 +54,3 @@ export function handleExportJson() {
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
 }
-
