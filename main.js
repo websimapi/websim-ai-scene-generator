@@ -1,27 +1,23 @@
-import { sceneState, addAssetToScene, getAssetById, updateAsset, removeAsset, markAsDirty, isStateDirty, clearDirtyFlag } from './state.js';
-import { initializeCanvas, redrawCanvas, getAssetAtPos, getSelectedAsset, clearAssetImages, setTool } from './editor.js';
+import { sceneState, addAssetToScene, markAsDirty, isStateDirty } from './state.js';
+import { initializeCanvas, redrawCanvas, clearAssetImages, setTool } from './editor.js';
 import { generateImage } from './api.js';
+import { 
+    showLoader, hideLoader, selectLibraryAsset, updatePropertiesPanel, 
+    animatePlaceholder, setupPanelToggles, addAssetToLibrary, 
+    updateSaveButtonState, updateLastGeneratedAsset 
+} from './ui.js';
+import { handleImportJson, handleExportJson } from './fileHandlers.js';
+import { saveStateToLocalStorage, loadStateFromLocalStorage } from './stateManager.js';
+import { initializeDragDrop } from './dragDrop.js';
 
-const loadingOverlay = document.getElementById('loading-overlay');
+// DOM Elements
 const generateSceneBtn = document.getElementById('generate-scene-btn');
 const generateAssetBtn = document.getElementById('generate-asset-btn');
 const importJsonBtn = document.getElementById('import-json-btn');
 const exportJsonBtn = document.getElementById('export-json-btn');
 const saveBtn = document.getElementById('save-btn');
 const assetLibrary = document.getElementById('asset-library');
-const propertiesPanel = document.getElementById('properties-panel-content');
 const scenePrompt = document.getElementById('scene-prompt');
-
-let lastGeneratedAsset = null;
-let touchDragGhost = null;
-
-function showLoader() {
-    loadingOverlay.style.display = 'flex';
-}
-
-function hideLoader() {
-    loadingOverlay.style.display = 'none';
-}
 
 async function handleGenerateScene() {
     showLoader();
@@ -52,7 +48,7 @@ async function handleGenerateAsset() {
         const result = await generateImage(prompt, isTransparent, "1:1");
         const assetType = document.getElementById('asset-type').value;
         
-        const asset = {
+        const assetData = {
             id: `asset_${Date.now()}`,
             type: assetType,
             prompt: prompt,
@@ -60,25 +56,12 @@ async function handleGenerateAsset() {
             name: `${assetType} - ${prompt.substring(0, 15)}...`
         };
         
-        lastGeneratedAsset = asset;
+        updateLastGeneratedAsset(assetData);
         
-        const img = document.createElement('img');
-        img.src = asset.url;
-        img.title = asset.prompt;
-        img.classList.add('library-asset');
-        img.draggable = true; // Make library assets draggable
-        img.dataset.assetId = asset.id;
-        img.dataset.assetUrl = asset.url;
-        img.dataset.assetType = asset.type;
-        img.dataset.assetPrompt = asset.prompt;
-        
-        // Add to library
-        assetLibrary.appendChild(img);
-        
-        // Select it
-        selectLibraryAsset(img);
+        const libraryImg = addAssetToLibrary(assetData);
+        selectLibraryAsset(libraryImg);
 
-        markAsDirty(); // A new asset in library is a change
+        markAsDirty();
     } catch (error) {
         console.error('Failed to generate asset:', error);
         alert('Could not generate asset.');
@@ -87,244 +70,28 @@ async function handleGenerateAsset() {
     }
 }
 
-function selectLibraryAsset(element) {
-    document.querySelectorAll('.library-asset').forEach(el => el.classList.remove('selected'));
-    if(element) {
-        element.classList.add('selected');
-        lastGeneratedAsset = {
-            id: `asset_${Date.now()}`,
-            url: element.dataset.assetUrl,
-            type: element.dataset.assetType,
-            prompt: element.dataset.assetPrompt
-        };
-        setTool('add'); // Automatically switch to add tool on mobile for tap-to-place
-    } else {
-        lastGeneratedAsset = null;
-    }
-}
-
-function handleImportJson() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json,application/json';
-    input.onchange = e => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = readerEvent => {
-            try {
-                const importedData = JSON.parse(readerEvent.target.result);
-                
-                // Basic validation
-                if (importedData && Array.isArray(importedData.assets)) {
-                    // Reset current scene state before loading new one
-                    sceneState.background = importedData.background || null;
-                    sceneState.assets = importedData.assets || [];
-                    
-                    clearAssetImages(); // Clear cached images of old assets
-                    markAsDirty();
-                    redrawCanvas();
-                    updatePropertiesPanel(null); // Clear properties panel
-                    console.log("Scene imported successfully.");
-                } else {
-                    alert('Invalid or corrupted scene file.');
-                }
-            } catch (error) {
-                console.error("Failed to parse JSON file:", error);
-                alert('Failed to read or parse the scene file. Please ensure it is a valid JSON.');
-            }
-        };
-        reader.onerror = error => {
-            console.error("File reading error:", error);
-            alert("Error reading file.");
-        };
-        reader.readAsText(file);
-    };
-    input.click();
-}
-
-function handleExportJson() {
-    const dataStr = JSON.stringify(sceneState, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    const exportFileDefaultName = 'scene.json';
-
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-}
-
-export function updatePropertiesPanel(assetId) {
-    if (!assetId) {
-        propertiesPanel.innerHTML = '<p>Select an asset to see its properties.</p>';
-        return;
-    }
-
-    const asset = getAssetById(assetId);
-    if (!asset) {
-        propertiesPanel.innerHTML = '<p>Asset not found.</p>';
-        return;
-    }
-
-    propertiesPanel.innerHTML = `
-        <div class="control-group">
-            <label>Name</label>
-            <input type="text" id="prop-name" value="${asset.name}">
-            <label>Type</label>
-            <input type="text" id="prop-type" value="${asset.type}" disabled>
-            <label>Prompt</label>
-            <textarea id="prop-prompt" rows="3" disabled>${asset.prompt}</textarea>
-            <label>X</label>
-            <input type="number" id="prop-x" value="${Math.round(asset.x)}">
-            <label>Y</label>
-            <input type="number" id="prop-y" value="${Math.round(asset.y)}">
-            <label>Width</label>
-            <input type="number" id="prop-width" value="${Math.round(asset.width)}">
-            <label>Height</label>
-            <input type="number" id="prop-height" value="${Math.round(asset.height)}">
-        </div>
-    `;
-
-    document.getElementById('prop-name').addEventListener('change', (e) => updateAsset(assetId, { name: e.target.value }));
-    document.getElementById('prop-x').addEventListener('change', (e) => {
-        updateAsset(assetId, { x: parseInt(e.target.value) });
-        redrawCanvas();
-    });
-     document.getElementById('prop-y').addEventListener('change', (e) => {
-        updateAsset(assetId, { y: parseInt(e.target.value) });
-        redrawCanvas();
-    });
-     document.getElementById('prop-width').addEventListener('change', (e) => {
-        updateAsset(assetId, { width: parseInt(e.target.value) });
-        redrawCanvas();
-    });
-     document.getElementById('prop-height').addEventListener('change', (e) => {
-        updateAsset(assetId, { height: parseInt(e.target.value) });
-        redrawCanvas();
-    });
-}
-
-function saveStateToLocalStorage() {
-    try {
-        console.log("Saving state to localStorage...");
-        localStorage.setItem('sceneState', JSON.stringify(sceneState));
-        
-        const libraryAssets = [];
-        document.querySelectorAll('.library-asset').forEach(img => {
-            libraryAssets.push({
-                url: img.dataset.assetUrl,
-                type: img.dataset.assetType,
-                prompt: img.dataset.assetPrompt,
-            });
-        });
-        localStorage.setItem('assetLibrary', JSON.stringify(libraryAssets));
-        
-        clearDirtyFlag();
-        saveBtn.classList.remove('dirty');
-        console.log("State saved.");
-    } catch (e) {
-        console.error("Failed to save state to localStorage", e);
-    }
-}
-
-function loadStateFromLocalStorage() {
-    try {
-        const savedState = localStorage.getItem('sceneState');
-        if (savedState) {
-            console.log("Loading scene state from localStorage...");
-            const parsedState = JSON.parse(savedState);
-            // Quick check to avoid loading invalid data
-            if (parsedState && typeof parsedState === 'object') {
-                Object.assign(sceneState, parsedState);
-            }
-        }
-
-        const savedLibrary = localStorage.getItem('assetLibrary');
-        if (savedLibrary) {
-            console.log("Loading asset library from localStorage...");
-            const parsedLibrary = JSON.parse(savedLibrary);
-            if(Array.isArray(parsedLibrary)) {
-                assetLibrary.innerHTML = ''; // Clear existing
-                parsedLibrary.forEach(assetData => {
-                    const img = document.createElement('img');
-                    img.src = assetData.url;
-                    img.title = assetData.prompt;
-                    img.classList.add('library-asset');
-                    img.draggable = true;
-                    img.dataset.assetUrl = assetData.url;
-                    img.dataset.assetType = assetData.type;
-                    img.dataset.assetPrompt = assetData.prompt;
-                    assetLibrary.appendChild(img);
-                });
-            }
-        }
-    } catch (e) {
-        console.error("Failed to load state from localStorage", e);
-    }
-}
-
-const placeholderPrompts = [
-    "A vibrant, magical forest clearing at dusk, fantasy art",
-    "Cyberpunk city street at night, neon lights, rain",
-    "Underwater coral reef teeming with bioluminescent creatures",
-    "Steampunk airship soaring through clouds above a mountain range",
-    "Alien desert landscape with two suns setting",
-    "Cozy medieval tavern with a crackling fireplace",
-    "Post-apocalyptic city ruins overgrown with nature",
-    "Futuristic space station orbiting a gas giant",
-    "Japanese zen garden with cherry blossoms and a koi pond",
-    "Haunted Victorian mansion on a stormy night"
-];
-
-let promptIndex = 0;
-let charIndex = 0;
-let isDeleting = false;
-
-function animatePlaceholder() {
-    const currentPrompt = placeholderPrompts[promptIndex];
-    let targetText;
-
-    if (isDeleting) {
-        targetText = currentPrompt.substring(0, charIndex--);
-    } else {
-        targetText = currentPrompt.substring(0, charIndex++);
-    }
-
-    scenePrompt.placeholder = targetText;
-
-    if (!isDeleting && charIndex === currentPrompt.length + 1) {
-        isDeleting = true;
-        setTimeout(animatePlaceholder, 2000); // Pause before deleting
-        return;
-    }
-
-    if (isDeleting && charIndex === -1) {
-        isDeleting = false;
-        promptIndex = (promptIndex + 1) % placeholderPrompts.length;
-        charIndex = 0;
-        setTimeout(animatePlaceholder, 500); // Pause before typing next
-        return;
-    }
-
-    const typingSpeed = isDeleting ? 50 : 100;
-    setTimeout(animatePlaceholder, typingSpeed);
-}
-
-
 document.addEventListener('DOMContentLoaded', () => {
-    loadStateFromLocalStorage();
-    initializeCanvas(document.getElementById('editor-canvas'));
-    redrawCanvas(); // Draw loaded state
-    animatePlaceholder(); // Start placeholder animation
+    // 1. Load initial state
+    const loadedLibraryAssets = loadStateFromLocalStorage();
+    loadedLibraryAssets.forEach(assetData => addAssetToLibrary(assetData));
 
+    // 2. Initialize modules
+    initializeCanvas(document.getElementById('editor-canvas'));
+    initializeDragDrop();
+    setupPanelToggles();
+
+    // 3. Initial draw and UI setup
+    redrawCanvas();
+    animatePlaceholder();
+
+    // 4. Register event listeners
     generateSceneBtn.addEventListener('click', handleGenerateScene);
     generateAssetBtn.addEventListener('click', handleGenerateAsset);
     importJsonBtn.addEventListener('click', handleImportJson);
     exportJsonBtn.addEventListener('click', handleExportJson);
     saveBtn.addEventListener('click', () => {
         saveStateToLocalStorage();
-        // Maybe add a more subtle notification in the future
+        updateSaveButtonState(false);
         alert('Scene Saved!');
     });
 
@@ -334,137 +101,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    assetLibrary.addEventListener('dragstart', (e) => {
-        if (e.target.classList.contains('library-asset')) {
-            const assetData = {
-                url: e.target.dataset.assetUrl,
-                type: e.target.dataset.assetType,
-                prompt: e.target.dataset.assetPrompt
-            };
-            e.dataTransfer.setData('application/json', JSON.stringify(assetData));
-            selectLibraryAsset(e.target); // Also select it visually
-        }
-    });
-
-    // --- Mobile Tap-and-Drag from Library ---
-    let isDraggingFromLibrary = false;
-    let dragData = null;
-
-    assetLibrary.addEventListener('touchstart', (e) => {
-        if (e.target.classList.contains('library-asset')) {
-            e.preventDefault();
-            isDraggingFromLibrary = true;
-            
-            const targetImg = e.target;
-            dragData = {
-                url: targetImg.dataset.assetUrl,
-                type: targetImg.dataset.assetType,
-                prompt: targetImg.dataset.assetPrompt,
-            };
-            
-            // Create ghost element
-            touchDragGhost = document.createElement('img');
-            touchDragGhost.src = targetImg.src;
-            touchDragGhost.style.position = 'fixed';
-            touchDragGhost.style.width = '60px';
-            touchDragGhost.style.height = '60px';
-            touchDragGhost.style.pointerEvents = 'none';
-            touchDragGhost.style.opacity = '0.7';
-            touchDragGhost.style.zIndex = '2000';
-            
-            const touch = e.touches[0];
-            touchDragGhost.style.left = `${touch.clientX - 30}px`;
-            touchDragGhost.style.top = `${touch.clientY - 30}px`;
-            
-            document.body.appendChild(touchDragGhost);
-        }
-    }, { passive: false });
-
-    window.addEventListener('touchmove', (e) => {
-        if (isDraggingFromLibrary && touchDragGhost) {
-            const touch = e.touches[0];
-            touchDragGhost.style.left = `${touch.clientX - 30}px`;
-            touchDragGhost.style.top = `${touch.clientY - 30}px`;
-        }
-    });
-    
-    window.addEventListener('touchend', (e) => {
-        if (isDraggingFromLibrary && touchDragGhost) {
-            isDraggingFromLibrary = false;
-
-            const touch = e.changedTouches[0];
-            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-            
-            if (dropTarget && dropTarget.id === 'editor-canvas') {
-                const rect = dropTarget.getBoundingClientRect();
-                const pos = {
-                    x: touch.clientX - rect.left,
-                    y: touch.clientY - rect.top,
-                };
-                
-                 const newAsset = {
-                    ...dragData,
-                    id: `asset_${Date.now()}`,
-                    x: pos.x - 50, // center on cursor
-                    y: pos.y - 50,
-                    width: 100,
-                    height: 100,
-                    name: `${dragData.type} - ${dragData.prompt.substring(0, 15)}...`
-                };
-                addAssetToScene(newAsset);
-                redrawCanvas();
-            }
-
-            document.body.removeChild(touchDragGhost);
-            touchDragGhost = null;
-            dragData = null;
-        }
-    });
-
-    // Autosave interval
+    // 5. Setup periodic tasks
     setInterval(() => {
         if (isStateDirty()) {
             saveStateToLocalStorage();
+            updateSaveButtonState(false);
         }
-    }, 5000); // Autosave every 5 seconds
+    }, 10000); // Autosave every 10 seconds
 
-    // Unsaved changes check
     setInterval(() => {
-        if(isStateDirty()) {
-            saveBtn.classList.add('dirty');
-        } else {
-            saveBtn.classList.remove('dirty');
-        }
+        updateSaveButtonState(isStateDirty());
     }, 1000);
 
     window.addEventListener('beforeunload', (e) => {
         if (isStateDirty()) {
             e.preventDefault();
-            e.returnValue = ''; // For Chrome
-            return 'You have unsaved changes. Are you sure you want to leave?'; // For older browsers
+            e.returnValue = '';
+            return 'You have unsaved changes. Are you sure you want to leave?';
         }
     });
-
-    // Mobile Panel Toggles
-    const leftPanel = document.getElementById('left-panel');
-    const rightPanel = document.getElementById('right-panel');
-    const mobileToggleLeft = document.getElementById('mobile-toggle-left');
-    const mobileToggleRight = document.getElementById('mobile-toggle-right');
-    const toggleLeftPanelBtn = document.getElementById('toggle-left-panel');
-    const toggleRightPanelBtn = document.getElementById('toggle-right-panel');
-
-    const togglePanel = (panel) => {
-        const isVisible = panel.classList.contains('visible');
-        document.querySelectorAll('#left-panel, #right-panel').forEach(p => p.classList.remove('visible'));
-        if (!isVisible) {
-            panel.classList.add('visible');
-        }
-    };
-    
-    mobileToggleLeft.addEventListener('click', () => togglePanel(leftPanel));
-    mobileToggleRight.addEventListener('click', () => togglePanel(rightPanel));
-    toggleLeftPanelBtn.addEventListener('click', () => leftPanel.classList.remove('visible'));
-    toggleRightPanelBtn.addEventListener('click', () => rightPanel.classList.remove('visible'));
 });
-
-export { lastGeneratedAsset };

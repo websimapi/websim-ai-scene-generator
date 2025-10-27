@@ -1,5 +1,6 @@
 import { sceneState, addAssetToScene, updateAsset, removeAsset, markAsDirty } from './state.js';
-import { lastGeneratedAsset, updatePropertiesPanel } from './main.js';
+import { updatePropertiesPanel } from './ui.js';
+import { lastGeneratedAsset } from './ui.js';
 
 let canvas, ctx;
 let backgroundImage = null;
