@@ -13,7 +13,7 @@
     </div>
     <div id="toolbar">
         <div id="scene-prompt-container">
-            <input type="text" id="scene-prompt" placeholder="A vibrant, magical forest...">
+            <textarea id="scene-prompt" rows="1" placeholder="A vibrant, magical forest..."></textarea>
             <button id="generate-scene-btn" title="Generate Scene"><img src="generate_icon.png" alt="Generate"></button>
         </div>
         <div class="dropdown">
@@ -33,14 +33,10 @@
             <button id="toggle-left-panel" class="panel-toggle" title="Hide Panel"><img src="hide_icon.png" alt="Hide"></button>
             
             <div class="control-group">
-                
                 <div class="input-with-icon">
                     <input type="text" id="asset-prompt" placeholder="Type here to generate asset">
                     <button id="asset-transparent-toggle" class="transparent-toggle" title="Toggle Transparent Background">
                         <img src="./eye_slash_icon.png" alt="Toggle Transparency">
-                    </button>
-                    <button id="generate-asset-btn" title="Generate Asset">
-                        <img id="generate-asset-icon" src="object_icon.png" alt="Generate Asset">
                     </button>
                 </div>
                 <div id="asset-type-selector">
@@ -51,6 +47,7 @@
                     <button class="asset-type-btn" data-type="Character" title="Character"><img src="character_icon.png" alt="Character"></button>
                     <button class="asset-type-btn" data-type="Background" title="Background"><img src="background_icon.png" alt="Background"></button>
                 </div>
+                <button id="generate-asset-btn">Generate Asset</button>
             </div>
             <div id="asset-library">
                 <!-- Generated assets will appear here -->
@@ -60,10 +57,7 @@
             <canvas id="editor-canvas"></canvas>
         </div>
         <div id="mobile-panel">
-            <div class="mobile-resize-handle">
-                <label id="mobile-asset-type-label"></label>
-                <label id="mobile-transparency-label"></label>
-            </div>
+            <div class="mobile-resize-handle"></div>
             <div id="mobile-panel-content">
                 <div id="mobile-left-panel-content">
                     <!-- left panel content will be moved here by JS -->
@@ -80,7 +74,6 @@
              </div>
         </div>
     </div>
-    <div id="floating-tools-container"></div>
     <script type="module" src="main.js"></script>
     <script type="module" src="ui.js"></script>
     <script type="module" src="propertiesPanel.js"></script>
