@@ -26,9 +26,9 @@ let selectedAssetId = null;
 let isDragging = false;
 let dragStartX, dragStartY;
 
-function getLogicalCoordsFromEvent(e) {
+export function getLogicalCoordsFromEvent(e) {
     const rect = canvas.getBoundingClientRect();
-    const isTouchEvent = e.touches && e.touches.length > 0;
+    const isTouchEvent = e.touches || e.changedTouches;
     const touchOrMouseEvent = isTouchEvent ? (e.touches[0] || e.changedTouches[0]) : e;
 
     // This gives the click position relative to the canvas element
@@ -98,8 +98,26 @@ export function clearAssetImages() {
 export function initializeCanvas(canvasElement) {
     canvas = canvasElement;
     ctx = canvas.getContext('2d');
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    
+    // The resizeCanvas function is now called by the ResizeObserver
+    // resizeCanvas(); // Initial call is implicitly handled by the observer firing on observe()
+    
+    if (window.ResizeObserver) {
+        const resizeObserver = new ResizeObserver(entries => {
+            // We are only observing one element. The callback is debounced.
+            window.requestAnimationFrame(() => {
+                if (!Array.isArray(entries) || !entries.length) {
+                    return;
+                }
+                resizeCanvas();
+            });
+        });
+        resizeObserver.observe(canvas);
+    } else {
+        // Fallback for older browsers
+        resizeCanvas(); // Manual initial call for fallback
+        window.addEventListener('resize', resizeCanvas);
+    }
 
     canvas.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('mouseup', onMouseUp);

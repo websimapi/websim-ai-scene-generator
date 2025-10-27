@@ -1,6 +1,7 @@
 import { sceneState, markAsDirty } from './state.js';
 import { clearAssetImages, redrawCanvas } from './editor.js';
 import { updatePropertiesPanel } from './propertiesPanel.js';
+import { addAssetToLibrary } from './ui.js';
 
 export function handleImportJson() {
     const input = document.createElement('input');
@@ -16,6 +17,40 @@ export function handleImportJson() {
                 const importedData = JSON.parse(readerEvent.target.result);
                 
                 if (importedData && Array.isArray(importedData.assets)) {
+                    // --- Start of my changes ---
+
+                    // Clear current asset library UI
+                    const assetLibrary = document.getElementById('asset-library');
+                    assetLibrary.innerHTML = '';
+
+                    // Use a Set to track URLs and avoid adding duplicate assets to the library
+                    const addedUrls = new Set();
+                    
+                    const addUniqueAssetToLibrary = (asset) => {
+                        if (asset.url && !addedUrls.has(asset.url)) {
+                            addAssetToLibrary(asset);
+                            addedUrls.add(asset.url);
+                        }
+                    };
+                    
+                    // Add background assets to library
+                    if (importedData.backgrounds && Array.isArray(importedData.backgrounds)) {
+                        importedData.backgrounds.forEach((bgUrl, index) => {
+                            addUniqueAssetToLibrary({
+                                id: `imported_bg_${index}_${Date.now()}`,
+                                url: bgUrl,
+                                type: 'Background',
+                                prompt: 'Imported background',
+                                name: 'Imported background'
+                            });
+                        });
+                    }
+
+                    // Add canvas assets to library
+                    importedData.assets.forEach(addUniqueAssetToLibrary);
+
+                    // --- End of my changes ---
+
                     if (importedData.background && !Array.isArray(importedData.backgrounds)) {
                         importedData.backgrounds = [importedData.background];
                     }

@@ -1,5 +1,5 @@
 import { addAssetToScene } from './state.js';
-import { redrawCanvas } from './editor.js';
+import { redrawCanvas, getLogicalCoordsFromEvent } from './editor.js';
 import { selectLibraryAsset } from './ui.js';
 
 let touchDragGhost = null;
@@ -67,19 +67,18 @@ function setupMobileDrag(assetLibrary) {
             const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
             
             if (dropTarget && dropTarget.id === 'editor-canvas') {
-                const rect = dropTarget.getBoundingClientRect();
-                const pos = {
-                    x: touch.clientX - rect.left,
-                    y: touch.clientY - rect.top,
-                };
+                const pos = getLogicalCoordsFromEvent(e);
+
+                const LOGICAL_WIDTH = 1920;
+                const assetSize = LOGICAL_WIDTH / 15;
                 
                  const newAsset = {
                     ...dragData,
                     id: `asset_${Date.now()}`,
-                    x: pos.x - 50,
-                    y: pos.y - 50,
-                    width: 100,
-                    height: 100,
+                    x: pos.x - (assetSize / 2),
+                    y: pos.y - (assetSize / 2),
+                    width: assetSize,
+                    height: assetSize,
                     name: `${dragData.type} - ${dragData.prompt.substring(0, 15)}...`
                 };
                 addAssetToScene(newAsset);
