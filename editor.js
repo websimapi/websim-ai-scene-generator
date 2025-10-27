@@ -1,4 +1,4 @@
-import { sceneState, addAssetToScene, updateAsset, removeAsset } from './state.js';
+import { sceneState, addAssetToScene, updateAsset, removeAsset, markAsDirty } from './state.js';
 import { lastGeneratedAsset, updatePropertiesPanel } from './main.js';
 
 let canvas, ctx;
@@ -10,15 +10,31 @@ let selectedAssetId = null;
 let isDragging = false;
 let dragStartX, dragStartY;
 
+function onMouseDown(e) {
+    if (activeTool !== 'move') return;
+
+    const pos = getMousePos(e);
+    const clickedAsset = getAssetAtPos(pos);
+
+    if (clickedAsset) {
+        selectAsset(clickedAsset);
+        isDragging = true;
+        dragStartX = pos.x - clickedAsset.x;
+        dragStartY = pos.y - clickedAsset.y;
+    } else {
+        selectAsset(null);
+    }
+}
+
 export function initializeCanvas(canvasElement) {
     canvas = canvasElement;
     ctx = canvas.getContext('2d');
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    canvas.addEventListener('mousedown', onMouseDown);
     canvas.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('mouseup', onMouseUp);
+    canvas.addEventListener('mousedown', onMouseDown);
     canvas.addEventListener('click', onClick);
     canvas.addEventListener('dragover', onDragOver);
     canvas.addEventListener('drop', onDrop);
@@ -120,21 +136,6 @@ function selectAsset(asset) {
     redrawCanvas();
 }
 
-function onMouseDown(e) {
-    const pos = getMousePos(e);
-    if (activeTool === 'move') {
-        const clickedAsset = getAssetAtPos(pos);
-        if (clickedAsset) {
-            isDragging = true;
-            selectAsset(clickedAsset);
-            dragStartX = pos.x - clickedAsset.x;
-            dragStartY = pos.y - clickedAsset.y;
-        } else {
-            selectAsset(null);
-        }
-    }
-}
-
 function onMouseMove(e) {
     if (isDragging && selectedAssetId && activeTool === 'move') {
         const pos = getMousePos(e);
@@ -148,6 +149,9 @@ function onMouseMove(e) {
 }
 
 function onMouseUp(e) {
+    if (isDragging) {
+        markAsDirty();
+    }
     isDragging = false;
 }
 
@@ -184,10 +188,9 @@ function onDrop(e) {
 function onClick(e) {
     const pos = getMousePos(e);
 
-    if(activeTool === 'move') {
-        const clickedAsset = getAssetAtPos(pos);
-        selectAsset(clickedAsset);
-    } else if (activeTool === 'add') {
+    // Click-to-select is now handled by onMouseDown, so we can avoid re-selecting here
+    // which might interfere with drag initiation. We only handle adding assets here.
+    if (activeTool === 'add') {
         if (!lastGeneratedAsset) {
             alert('Please generate an asset first or select one from the library.');
             return;

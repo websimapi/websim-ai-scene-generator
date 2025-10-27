@@ -1,4 +1,4 @@
-import { sceneState, addAssetToScene, getAssetById, updateAsset, removeAsset } from './state.js';
+import { sceneState, addAssetToScene, getAssetById, updateAsset, removeAsset, markAsDirty, isStateDirty, clearDirtyFlag } from './state.js';
 import { initializeCanvas, redrawCanvas, getAssetAtPos, getSelectedAsset } from './editor.js';
 import { generateImage } from './api.js';
 
@@ -25,6 +25,7 @@ async function handleGenerateScene() {
     try {
         const result = await generateImage(prompt, false, "16:9");
         sceneState.background = result.url;
+        markAsDirty();
         redrawCanvas();
     } catch (error) {
         console.error('Failed to generate scene:', error);
@@ -73,6 +74,7 @@ async function handleGenerateAsset() {
         // Select it
         selectLibraryAsset(img);
 
+        markAsDirty(); // A new asset in library is a change
     } catch (error) {
         console.error('Failed to generate asset:', error);
         alert('Could not generate asset.');
@@ -157,9 +159,69 @@ export function updatePropertiesPanel(assetId) {
     });
 }
 
+function saveStateToLocalStorage() {
+    try {
+        console.log("Autosaving state to localStorage...");
+        localStorage.setItem('sceneState', JSON.stringify(sceneState));
+        
+        const libraryAssets = [];
+        document.querySelectorAll('.library-asset').forEach(img => {
+            libraryAssets.push({
+                url: img.dataset.assetUrl,
+                type: img.dataset.assetType,
+                prompt: img.dataset.assetPrompt,
+            });
+        });
+        localStorage.setItem('assetLibrary', JSON.stringify(libraryAssets));
+        
+        clearDirtyFlag();
+        console.log("State saved.");
+    } catch (e) {
+        console.error("Failed to save state to localStorage", e);
+    }
+}
+
+function loadStateFromLocalStorage() {
+    try {
+        const savedState = localStorage.getItem('sceneState');
+        if (savedState) {
+            console.log("Loading scene state from localStorage...");
+            const parsedState = JSON.parse(savedState);
+            // Quick check to avoid loading invalid data
+            if (parsedState && typeof parsedState === 'object') {
+                Object.assign(sceneState, parsedState);
+            }
+        }
+
+        const savedLibrary = localStorage.getItem('assetLibrary');
+        if (savedLibrary) {
+            console.log("Loading asset library from localStorage...");
+            const parsedLibrary = JSON.parse(savedLibrary);
+            if(Array.isArray(parsedLibrary)) {
+                assetLibrary.innerHTML = ''; // Clear existing
+                parsedLibrary.forEach(assetData => {
+                    const img = document.createElement('img');
+                    img.src = assetData.url;
+                    img.title = assetData.prompt;
+                    img.classList.add('library-asset');
+                    img.draggable = true;
+                    img.dataset.assetUrl = assetData.url;
+                    img.dataset.assetType = assetData.type;
+                    img.dataset.assetPrompt = assetData.prompt;
+                    assetLibrary.appendChild(img);
+                });
+            }
+        }
+    } catch (e) {
+        console.error("Failed to load state from localStorage", e);
+    }
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
+    loadStateFromLocalStorage();
     initializeCanvas(document.getElementById('editor-canvas'));
+    redrawCanvas(); // Draw loaded state
 
     generateSceneBtn.addEventListener('click', handleGenerateScene);
     generateAssetBtn.addEventListener('click', handleGenerateAsset);
@@ -182,6 +244,13 @@ document.addEventListener('DOMContentLoaded', () => {
             selectLibraryAsset(e.target); // Also select it visually
         }
     });
+
+    // Autosave interval
+    setInterval(() => {
+        if (isStateDirty()) {
+            saveStateToLocalStorage();
+        }
+    }, 5000); // Autosave every 5 seconds
 });
 
 export { lastGeneratedAsset };
