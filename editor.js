@@ -196,19 +196,17 @@ export function redrawCanvas() {
     if (sceneState.backgrounds.length > 0 && backgroundImages.length !== sceneState.backgrounds.length) {
         backgroundImages = [];
         sceneState.backgrounds.forEach(bgUrl => {
-            if (!bgUrl) return; // Skip if URL is invalid
             const img = new Image();
-            img.crossOrigin = "anonymous";
+            img.crossOrigin = 'anonymous';
             img.src = bgUrl;
             img.onload = () => redrawCanvas();
-            img.onerror = () => console.error(`Failed to load background image: ${bgUrl}`);
             backgroundImages.push(img);
         });
     }
 
     if (backgroundImages.length > 0) {
         backgroundImages.forEach(bgImg => {
-            if (bgImg.complete && bgImg.naturalWidth > 0) {
+            if (bgImg.complete) {
                 ctx.drawImage(bgImg, 0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
             }
         });
@@ -218,13 +216,12 @@ export function redrawCanvas() {
     sceneState.assets.forEach(asset => {
         if (!assetImages[asset.id]) {
             assetImages[asset.id] = new Image();
-            assetImages[asset.id].crossOrigin = "anonymous";
+            assetImages[asset.id].crossOrigin = 'anonymous';
             assetImages[asset.id].src = asset.url;
             assetImages[asset.id].onload = () => redrawCanvas();
-            assetImages[asset.id].onerror = () => console.error(`Failed to load asset image for asset ${asset.id}: ${asset.url}`);
         }
         const img = assetImages[asset.id];
-        if (img && img.complete && img.naturalWidth > 0) {
+        if (img && img.complete) {
             ctx.drawImage(img, asset.x, asset.y, asset.width, asset.height);
 
             // Draw selection box if selected, using the asset type's color
