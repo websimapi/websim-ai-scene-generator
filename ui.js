@@ -35,8 +35,9 @@ export function checkToolbarState() {
         toolbar.classList.remove('hidden');
         appContainer.classList.remove('full-height');
 
-        if (toolsDropdown.parentElement !== toolbar) {
-             toolbar.appendChild(toolsDropdown);
+        const toolbarDropdownContainer = document.getElementById('toolbar');
+        if (toolsDropdown.parentElement !== toolbarDropdownContainer) {
+             toolbarDropdownContainer.appendChild(toolsDropdown);
         }
        
         floatingToolsContainer.style.display = 'none';

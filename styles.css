@@ -72,26 +72,29 @@ h2, h3 {
 #scene-prompt-container {
     display: flex;
     align-items: center; /* Align textarea and button */
-    gap: 5px;
     flex-grow: 1; /* Allow it to take up available space */
+    position: relative; /* For positioning the button inside */
 }
 
-#scene-prompt-container textarea {
+#scene-prompt-container input {
     flex-grow: 1;
     height: 40px; /* Match button height */
-    resize: none; /* Disable resizing */
     padding: 8px;
+    padding-right: 45px; /* Space for the button */
     box-sizing: border-box;
-    line-height: 1.5; /* Center text vertically */
 }
 
 #scene-prompt-container button {
-    width: 40px;
-    height: 40px;
-    padding: 8px;
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 35px;
+    height: 35px;
+    padding: 5px;
     flex-shrink: 0; /* Prevent button from shrinking */
-    background-color: var(--panel-bg);
-    border: 1px solid var(--border-color);
+    background-color: var(--input-bg);
+    border: none;
 }
 #scene-prompt-container button:hover {
     background-color: var(--primary-hover);
@@ -249,6 +252,10 @@ input::placeholder, textarea::placeholder {
     color: #888; /* A nice medium grey for placeholders */
 }
 
+.placeholder-style {
+    color: #888;
+}
+
 @keyframes text-colorize {
     from { color: #888; } /* Placeholder color */
     to { color: var(--text-color); } /* Final input text color */
@@ -337,6 +344,10 @@ button:hover {
 .dropdown {
     position: relative;
     display: inline-block;
+}
+
+.dropdown.mobile-only {
+    display: none;
 }
 
 .dropdown-content {
@@ -559,7 +570,36 @@ button:hover {
 
 
 .mobile-resize-handle {
-    display: none; /* Hidden by default on desktop */
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background-color: transparent;
+    cursor: ns-resize;
+    touch-action: none;
+    z-index: 110;
+}
+
+.mobile-resize-handle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+    height: 5px;
+    background-color: var(--border-color);
+    border-radius: 3px;
+}
+
+.dropdown {
+    display: none; /* Hide toolbar dropdown */
+}
+
+.dropdown.mobile-only {
+    display: inline-block; /* Show mobile-specific dropdown container */
 }
 
 @media (max-width: 768px) {
@@ -620,31 +660,6 @@ button:hover {
     
     #mobile-panel-content .control-group {
         padding-bottom: 10px;
-    }
-
-    .mobile-resize-handle {
-        display: block;
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 30px;
-        background-color: transparent;
-        cursor: ns-resize;
-        touch-action: none;
-        z-index: 110;
-    }
-
-    .mobile-resize-handle::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 50px;
-        height: 5px;
-        background-color: var(--border-color);
-        border-radius: 3px;
     }
 
     /* Hide desktop panel toggles on mobile */

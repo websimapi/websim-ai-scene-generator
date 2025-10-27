@@ -10,7 +10,8 @@ let isFastForwardingAsset = false;
  * @param {HTMLInputElement|HTMLTextAreaElement} element - The input or textarea element.
  */
 function finalizeSuggestion(element) {
-    element.value = element.placeholder;
+    // Value is already set by the animation, just need to change style
+    element.classList.remove('placeholder-style');
     element.placeholder = ''; // Clear placeholder to show the value
     
     // Add animation class and remove it after it completes
@@ -57,7 +58,9 @@ function animatePlaceholder() {
         targetText = currentPrompt.substring(0, charIndex++);
     }
 
-    scenePrompt.placeholder = targetText;
+    scenePrompt.value = targetText;
+    scenePrompt.placeholder = ''; // Clear placeholder while animating value
+    scenePrompt.scrollLeft = scenePrompt.scrollWidth - scenePrompt.clientWidth;
 
     if (!isDeleting && charIndex === currentPrompt.length + 1) {
         if (isFastForwardingScene) {
@@ -93,6 +96,7 @@ function animatePlaceholder() {
 export function startScenePlaceholderAnimation() {
     if (isSceneAnimationRunning || scenePrompt.value.length > 0) return;
     isSceneAnimationRunning = true;
+    scenePrompt.classList.add('placeholder-style');
     animatePlaceholder();
 }
 
@@ -100,7 +104,9 @@ export function stopScenePlaceholderAnimation() {
     if (!isSceneAnimationRunning) return;
     isSceneAnimationRunning = false;
     clearTimeout(sceneAnimationTimeoutId);
+    scenePrompt.classList.remove('placeholder-style');
     if (!isFastForwardingScene) {
+        scenePrompt.value = '';
         scenePrompt.placeholder = "A vibrant, magical forest...";
     }
     promptIndex = 0;
@@ -140,7 +146,9 @@ function animateAssetPlaceholder() {
         targetText = currentPrompt.substring(0, assetCharIndex++);
     }
 
-    assetPrompt.placeholder = targetText;
+    assetPrompt.value = targetText;
+    assetPrompt.placeholder = ''; // Clear placeholder while animating value
+    assetPrompt.scrollLeft = assetPrompt.scrollWidth - assetPrompt.clientWidth;
 
     if (!isAssetDeleting && assetCharIndex === currentPrompt.length + 1) {
         if (isFastForwardingAsset) {
@@ -173,8 +181,9 @@ function animateAssetPlaceholder() {
 }
 
 export function startAssetPlaceholderAnimation() {
-    if (isAssetAnimationRunning) return;
+    if (isAssetAnimationRunning || assetPrompt.value.length > 0) return;
     isAssetAnimationRunning = true;
+    assetPrompt.classList.add('placeholder-style');
     animateAssetPlaceholder();
 }
 
@@ -182,7 +191,9 @@ export function stopAssetPlaceholderAnimation() {
     if (!isAssetAnimationRunning) return;
     isAssetAnimationRunning = false;
     clearTimeout(assetAnimationTimeoutId);
+    assetPrompt.classList.remove('placeholder-style');
     if (!isFastForwardingAsset) {
+        assetPrompt.value = '';
         assetPrompt.placeholder = "Type here to generate asset";
     }
     assetPromptIndex = 0;
