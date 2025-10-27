@@ -19,6 +19,7 @@ export const assetTypeColors = {
     'NPC': '#98FB98',       // Pale Green
     'Item': '#87CEEB',      // Sky Blue
     'Character': '#FFA07A', // Light Salmon
+    'Background': '#D2B48C'   // Tan
 };
 
 let activeTool = 'move'; // 'move', 'add', 'delete'

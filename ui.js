@@ -99,6 +99,15 @@ export function initializeUI() {
     initializePanelManager();
     setupPromptAnimations();
 
+    // Set asset type button colors
+    assetTypeSelector.querySelectorAll('.asset-type-btn').forEach(btn => {
+        const type = btn.dataset.type;
+        const color = assetTypeColors[type];
+        if (color) {
+            btn.style.borderColor = color;
+        }
+    });
+
     // Asset Type Button Logic
     assetTypeSelector.addEventListener('click', (e) => {
         const button = e.target.closest('.asset-type-btn');

@@ -138,8 +138,9 @@ h2, h3 {
     height: 40px;
     padding: 6px;
     background-color: var(--input-bg);
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
     cursor: pointer;
+    transition: all 0.2s; /* Added transition for border width */
 }
 
 .asset-type-btn:hover {
@@ -149,7 +150,7 @@ h2, h3 {
 
 .asset-type-btn.active {
     background-color: var(--primary-color);
-    border-color: var(--primary-color);
+    border-width: 4px; /* Use border width to indicate active state */
 }
 
 .asset-type-btn img {
